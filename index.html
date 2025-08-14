@@ -78,6 +78,23 @@
         gap: 2px;
       }
       .okx-squares i { width: 8px; height: 8px; display: block; background: currentColor }
+      .ca-badge {
+        display: inline-grid;
+        grid-auto-flow: column;
+        align-items: center;
+        gap: 6px;
+        font-weight: 900;
+        letter-spacing: .5px;
+        background: rgba(255,255,255,.06);
+        color: var(--text);
+        border: 1px solid rgba(255,255,255,.15);
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .ca-badge code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace }
+      :root[data-theme="light"] .ca-badge { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12); color: var(--text) }
       html[data-brand="okx"] .btn { background: linear-gradient(135deg, #000, #222); color: #fff; border: 1px solid rgba(255,255,255,.12) }
       html[data-brand="okx"] .btn.secondary { background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.05)) }
 
@@ -162,6 +179,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
       }
 
       .btn {
@@ -402,6 +420,10 @@
           </span>
         </div>
         <div class="actions">
+          <button class="ca-badge" id="copyCa" title="Click to copy contract address" aria-label="Copy contract address">
+            CA:
+            <code>0x85c0...12bd</code>
+          </button>
           <div class="theme-toggle">
             <button class="btn secondary" id="toggleTheme" title="Toggle theme">🌙/🌞</button>
             <button class="btn secondary" id="clearChat" title="Clear chat">🧹 Clear</button>
@@ -480,6 +502,7 @@
         confetti: document.getElementById('confetti'),
         toggleTheme: document.getElementById('toggleTheme'),
         clearChat: document.getElementById('clearChat'),
+        copyCa: document.getElementById('copyCa'),
       };
 
       const STICKERS = [
@@ -662,6 +685,21 @@
           state.brand = (state.brand === 'okx') ? 'default' : 'okx';
           applyBrand(state.brand);
         });
+        if (el.copyCa) {
+          el.copyCa.addEventListener('click', async () => {
+            const full = '0x85c0fd544BfDe1A0BbAc7a841E546F98f4ba12bd';
+            try {
+              await navigator.clipboard.writeText(full);
+              const prev = el.copyCa.innerHTML;
+              el.copyCa.innerHTML = 'Copied ✅';
+              setTimeout(() => { el.copyCa.innerHTML = prev; }, 1200);
+            } catch (_) {
+              const prev = el.copyCa.innerHTML;
+              el.copyCa.innerHTML = 'Copy failed ❌';
+              setTimeout(() => { el.copyCa.innerHTML = prev; }, 1200);
+            }
+          });
+        }
         document.addEventListener('click', (e) => {
           if (!el.stickersPanel.contains(e.target) && e.target !== el.toggleStickers) {
             openStickers(false);
@@ -753,5 +791,3 @@
     </script>
   </body>
 </html>
-
-
