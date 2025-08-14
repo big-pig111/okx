@@ -95,6 +95,41 @@
       }
       .ca-badge code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace }
       :root[data-theme="light"] .ca-badge { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12); color: var(--text) }
+
+      .users-badge {
+        display: inline-grid;
+        grid-auto-flow: column;
+        align-items: center;
+        gap: 6px;
+        font-weight: 800;
+        letter-spacing: .2px;
+        background: rgba(255,255,255,.06);
+        color: var(--text);
+        border: 1px solid rgba(255,255,255,.15);
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+      }
+      :root[data-theme="light"] .users-badge { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12) }
+
+      .link-btn {
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 11px;
+        padding: 0 6px;
+      }
+      .link-btn:hover { filter: brightness(1.2) }
+
+      .typing-bar {
+        padding: 0 16px 8px 16px;
+        color: var(--muted);
+        display: none;
+        align-items: center;
+        gap: 8px;
+      }
+      .typing-bar.open { display: inline-grid }
       html[data-brand="okx"] .btn { background: linear-gradient(135deg, #000, #222); color: #fff; border: 1px solid rgba(255,255,255,.12) }
       html[data-brand="okx"] .btn.secondary { background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.05)) }
 
@@ -424,6 +459,8 @@
             CA:
             <code>0x85c0...12bd</code>
           </button>
+          <span class="users-badge" id="usersBadge" title="Online users">👥 <b id="usersCount">1</b></span>
+          <button class="btn secondary" id="renameBtn" title="Change your display name">✏️ Rename</button>
           <div class="theme-toggle">
             <button class="btn secondary" id="toggleTheme" title="Toggle theme">🌙/🌞</button>
             <button class="btn secondary" id="clearChat" title="Clear chat">🧹 Clear</button>
@@ -435,6 +472,10 @@
 
       <main class="chat">
         <div class="messages" id="messages" aria-live="polite" aria-atomic="false"></div>
+        <div class="typing-bar" id="typingBar">
+          <span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+          <span id="typingText">Someone is typing…</span>
+        </div>
         <div class="panel-stickers" id="stickersPanel" aria-label="Sticker picker">
           <div class="stickers-grid" id="stickersGrid"></div>
         </div>
@@ -503,6 +544,10 @@
         toggleTheme: document.getElementById('toggleTheme'),
         clearChat: document.getElementById('clearChat'),
         copyCa: document.getElementById('copyCa'),
+        usersCount: document.getElementById('usersCount'),
+        typingBar: document.getElementById('typingBar'),
+        typingText: document.getElementById('typingText'),
+        renameBtn: document.getElementById('renameBtn'),
       };
 
       const STICKERS = [
@@ -554,12 +599,32 @@
           div.textContent = message.text;
           content.appendChild(div);
         } else {
-          content.textContent = message.text || '';
+          const text = message.text || '';
+          const withLinks = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1<\/a>');
+          content.innerHTML = withLinks;
         }
 
         const who = isMine ? 'You' : (message.name || 'Anonymous');
         const when = formatTime(message.createdAt);
-        meta.innerHTML = `<span class="tag">${who}</span><span>${when}</span>`;
+        const actions = isMine ? `<button class="link-btn" data-act="copy">Copy<\/button><button class="link-btn" data-act="delete" data-id="${message.id || ''}">Delete<\/button>` : `<button class="link-btn" data-act="copy">Copy<\/button>`;
+        meta.innerHTML = `<span class="tag">${who}<\/span><span>${when}<\/span>${actions}`;
+
+        meta.addEventListener('click', async (e) => {
+          const target = e.target;
+          if (!(target instanceof HTMLElement)) return;
+          const act = target.getAttribute('data-act');
+          if (!act) return;
+          const textToCopy = message.type === 'text' ? (message.text || '') : (message.url || '');
+          if (act === 'copy' && textToCopy) {
+            try { await navigator.clipboard.writeText(textToCopy); target.textContent = 'Copied'; setTimeout(() => target.textContent = 'Copy', 1000); } catch (_) {}
+          }
+          if (act === 'delete' && isMine) {
+            if (message.id) {
+              await firebase.database().ref('messages/' + message.id).remove();
+              bubble.remove();
+            }
+          }
+        });
 
         el.messages.appendChild(bubble);
         scrollToBottom();
@@ -677,10 +742,26 @@
             onSend();
           }
         });
+        el.textInput.addEventListener('input', () => {
+          if (!state.user) return;
+          const typingRef = firebase.database().ref(`typing/${state.user.uid}`);
+          const now = Date.now();
+          typingRef.set({ name: state.user.name, ts: now });
+          clearTimeout(state._typingTimer);
+          state._typingTimer = setTimeout(() => typingRef.remove(), 2000);
+        });
         
         el.fileInput.addEventListener('change', (e) => onFileChosen(e.target.files[0]));
         el.toggleStickers.addEventListener('click', () => openStickers(!el.stickersPanel.classList.contains('open')));
         el.memeBoost.addEventListener('click', memeBoost);
+        el.renameBtn.addEventListener('click', () => {
+          const current = state.user?.name || localStorage.getItem('meme-name') || '';
+          const name = prompt('Enter a new display name:', current);
+          if (name && name.trim()) {
+            localStorage.setItem('meme-name', name.trim());
+            if (state.user) state.user.name = name.trim();
+          }
+        });
         el.toggleOkx.addEventListener('click', () => {
           state.brand = (state.brand === 'okx') ? 'default' : 'okx';
           applyBrand(state.brand);
@@ -730,6 +811,19 @@
               const savedName = localStorage.getItem('meme-name') || randomName();
               localStorage.setItem('meme-name', savedName);
               state.user = { uid: user.uid, name: savedName };
+              // Presence
+              const presenceRef = firebase.database().ref(`presence/${user.uid}`);
+              const infoRef = firebase.database().ref('.info/connected');
+              infoRef.on('value', (snap) => {
+                if (snap.val() === true) {
+                  presenceRef.onDisconnect().remove();
+                  presenceRef.set({ name: savedName, ts: firebase.database.ServerValue.TIMESTAMP });
+                }
+              });
+              firebase.database().ref('presence').on('value', (snap) => {
+                const count = snap.numChildren();
+                if (el.usersCount) el.usersCount.textContent = String(count);
+              });
               resolve(state.user);
             } catch (err) {
               reject(err);
@@ -744,7 +838,22 @@
         ref.on('child_added', (snap) => {
           const msg = snap.val();
           if (!msg) return;
+          msg.id = snap.key;
           renderMessage(msg);
+        });
+        // typing indicator
+        const typingRef = firebase.database().ref('typing');
+        typingRef.off();
+        typingRef.on('value', (snap) => {
+          const typing = snap.val() || {};
+          const otherTyping = Object.keys(typing).filter(uid => uid !== state.user?.uid);
+          if (otherTyping.length > 0) {
+            el.typingBar.classList.add('open');
+            const names = otherTyping.map(uid => typing[uid]?.name || 'Someone');
+            el.typingText.textContent = `${names.slice(0,2).join(', ')} is typing…`;
+          } else {
+            el.typingBar.classList.remove('open');
+          }
         });
       }
 
