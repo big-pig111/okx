@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meme Chatroom · Ultra-hype Meme Chatroom</title>
+    <meta name="color-scheme" content="light dark" />
+    <style>
+      :root {
+        --bg: #0b1021;
+        --bg-accent: #12173a;
+        --panel: #0f1431;
+        --text: #e6e8ff;
+        --muted: #aab0ff;
+        --brand: #8a2be2;
+        --brand-2: #00f5d4;
+        --brand-3: #ffd166;
+        --bubble-me: #2c1f4a;
+        --bubble-bot: #15243f;
+        --input: #14193a;
+        --shadow: 0 10px 25px rgba(0,0,0,.35);
+        --radius: 16px;
+      }
+
+      /* Light theme overrides */
+      :root[data-theme="light"] {
+        --bg: #faf7ff;
+        --bg-accent: #fff2ff;
+        --panel: #ffffff;
+        --text: #1a1033;
+        --muted: #4a3f7a;
+        --brand: #6a00f4;
+        --brand-2: #00c2a8;
+        --brand-3: #ff7a59;
+        --bubble-me: #efe4ff;
+        --bubble-bot: #ecf6ff;
+        --input: #ffffff;
+        --shadow: 0 10px 25px rgba(0,0,0,.12);
+      }
+
+      /* OKX brand mode overrides */
+      html[data-brand="okx"] body {
+        background: #0a0a0a;
+      }
+      html[data-brand="okx"] .app::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background-image:
+          repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px),
+          repeating-linear-gradient(-45deg, rgba(255,255,255,.03) 0 10px, transparent 10px 20px);
+        pointer-events: none;
+        border-radius: inherit;
+        mix-blend-mode: overlay;
+      }
+      html[data-brand="okx"] .logo {
+        background: conic-gradient(from 180deg, #000, #fff, #000);
+        box-shadow: 0 6px 18px rgba(0,0,0,.6);
+        animation: none;
+      }
+      .okx-badge {
+        display: inline-grid;
+        grid-auto-flow: column;
+        align-items: center;
+        gap: 6px;
+        font-weight: 900;
+        letter-spacing: .5px;
+        background: #000;
+        color: #fff;
+        border: 1px solid rgba(255,255,255,.15);
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+      }
+      .okx-squares {
+        display: grid;
+        grid-template-columns: repeat(3, 8px);
+        gap: 2px;
+      }
+      .okx-squares i { width: 8px; height: 8px; display: block; background: currentColor }
+      html[data-brand="okx"] .btn { background: linear-gradient(135deg, #000, #222); color: #fff; border: 1px solid rgba(255,255,255,.12) }
+      html[data-brand="okx"] .btn.secondary { background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.05)) }
+
+      html, body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background: radial-gradient(1000px 600px at 10% -10%, rgba(138,43,226,.35), transparent 60%),
+                    radial-gradient(800px 600px at 110% 10%, rgba(0,245,212,.25), transparent 60%),
+                    linear-gradient(180deg, var(--bg-accent), var(--bg));
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        display: grid;
+        place-items: center;
+      }
+
+      .app {
+        width: min(1024px, 98vw);
+        height: min(760px, 92vh);
+        background: var(--panel);
+        border-radius: calc(var(--radius) + 2px);
+        box-shadow: var(--shadow);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        background:
+          linear-gradient(90deg, rgba(106,0,244,.25), rgba(0,245,212,.15) 50%, rgba(255,209,102,.25));
+        border-bottom: 1px solid rgba(255,255,255,.08);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: conic-gradient(from 180deg, var(--brand), var(--brand-2), var(--brand-3), var(--brand));
+        position: relative;
+        box-shadow: 0 6px 18px rgba(138,43,226,.45);
+        animation: hue 6s linear infinite;
+      }
+
+      .logo::after {
+        content: "😎";
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,.3));
+      }
+
+      .title {
+        display: grid;
+        line-height: 1.1;
+      }
+      .title b {
+        font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+        letter-spacing: 0.5px;
+        font-size: 18px;
+      }
+      .title span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn {
+        appearance: none;
+        border: 0;
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: #fff;
+        cursor: pointer;
+        transition: transform .15s ease, filter .15s ease;
+      }
+      .btn.secondary {
+        background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+        color: var(--text);
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .btn:active {
+        transform: translateY(1px) scale(.98);
+        filter: brightness(.95);
+      }
+
+      .chat {
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .messages {
+        overflow: auto;
+        padding: 18px 16px 10px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .bubble {
+        max-width: 72%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        position: relative;
+        word-wrap: break-word;
+        box-shadow: 0 8px 16px rgba(0,0,0,.2);
+        animation: pop .18s ease;
+      }
+      .bubble.me {
+        margin-left: auto;
+        background: linear-gradient(135deg, var(--bubble-me), rgba(138,43,226,.18));
+        border: 1px solid rgba(138,43,226,.25);
+      }
+      .bubble.bot {
+        margin-right: auto;
+        background: linear-gradient(135deg, var(--bubble-bot), rgba(0,245,212,.12));
+        border: 1px solid rgba(0,245,212,.25);
+      }
+      .bubble.other {
+        margin-right: auto;
+        background: linear-gradient(135deg, var(--bubble-bot), rgba(0,245,212,.12));
+        border: 1px solid rgba(0,245,212,.25);
+      }
+      .bubble .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 6px;
+      }
+      .bubble .meta .tag {
+        font-weight: 800;
+        letter-spacing: .2px;
+      }
+
+      .bubble img.media {
+        max-width: 100%;
+        border-radius: 12px;
+        display: block;
+      }
+      .bubble .sticker {
+        font-size: 42px;
+        line-height: 1.1;
+      }
+
+      .input {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        padding: 12px;
+        border-top: 1px solid rgba(255,255,255,.08);
+        background: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.06));
+      }
+      .tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .field {
+        display: grid;
+        align-items: center;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        background: var(--input);
+        border-radius: 12px;
+        padding: 6px 10px 6px 12px;
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .field input[type="text"] {
+        background: transparent;
+        border: 0;
+        outline: none;
+        color: var(--text);
+        font-size: 15px;
+        padding: 8px 0;
+      }
+      .field .right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.08);
+        color: var(--text);
+        cursor: pointer;
+        transition: transform .15s ease, background .15s ease, filter .15s ease;
+      }
+      .icon-btn:hover { background: rgba(255,255,255,.12) }
+      .icon-btn:active { transform: translateY(1px) scale(.98); filter: brightness(.95) }
+
+      .send-btn { padding: 0 16px }
+
+      .panel-stickers {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 70px;
+        z-index: 5;
+        background: var(--panel);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 10px;
+        display: none;
+        max-height: 200px;
+        overflow: auto;
+      }
+      .panel-stickers.open { display: grid }
+      .stickers-grid {
+        display: grid;
+        grid-template-columns: repeat(10, minmax(38px, 1fr));
+        gap: 8px;
+      }
+      .sticker-item {
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+        padding: 8px 4px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.08);
+        cursor: pointer;
+        transition: transform .15s ease, filter .15s ease;
+      }
+      .sticker-item:active { transform: scale(.95) }
+
+      .theme-toggle {
+        display: grid;
+        grid-auto-flow: column;
+        gap: 6px;
+      }
+
+      /* Meme booster effects */
+      .meme-shake { animation: shake .55s ease-in-out }
+      .meme-rainbow { background-image: linear-gradient(90deg, #ff0040, #ffbf00, #00df7e, #00bfff, #8a2be2); background-size: 400% 400%; animation: hue 4s linear infinite, moveBg 6s ease infinite }
+      .meme-glow { box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 0 24px rgba(255,0,128,.35) !important }
+
+      /* Typing indicator */
+      .typing {
+        display: inline-grid;
+        grid-auto-flow: column;
+        gap: 6px;
+        align-items: center;
+      }
+      .typing .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--muted);
+        animation: bounce 1.2s ease-in-out infinite;
+      }
+      .typing .dot:nth-child(2) { animation-delay: .2s }
+      .typing .dot:nth-child(3) { animation-delay: .4s }
+
+      /* Confetti */
+      .confetti { position: absolute; pointer-events: none; inset: 0 }
+      .confetti i {
+        position: absolute;
+        width: 10px; height: 14px;
+        background: var(--brand);
+        transform: translateY(-20px) rotate(0);
+        opacity: .95;
+        will-change: transform;
+      }
+
+      @keyframes hue { from { filter: hue-rotate(0deg) } to { filter: hue-rotate(360deg) } }
+      @keyframes moveBg { 0% { background-position: 0% 50% } 50% { background-position: 100% 50% } 100% { background-position: 0% 50% } }
+      @keyframes pop { from { transform: translateY(8px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+      @keyframes shake { 0% { transform: rotate(0) } 20% { transform: rotate(2deg) } 40% { transform: rotate(-2deg) } 60% { transform: rotate(2deg) } 80% { transform: rotate(-2deg) } 100% { transform: rotate(0) } }
+      @keyframes bounce { 0%, 80%, 100% { transform: translateY(0) } 40% { transform: translateY(-8px) } }
+
+      /* Utilities */
+      .hidden { display: none !important }
+      .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+      @media (max-width: 720px) {
+        .bubble { max-width: 88% }
+        .stickers-grid { grid-template-columns: repeat(8, minmax(34px, 1fr)) }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="header">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <b>MEME CHATROOM</b>
+            <span>Colors maxed · Animations maxed · Meme culture packed</span>
+          </div>
+          <span class="okx-badge" title="OKX-inspired visuals">
+            <span class="okx-squares" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            OKX MODE
+          </span>
+        </div>
+        <div class="actions">
+          <div class="theme-toggle">
+            <button class="btn secondary" id="toggleTheme" title="Toggle theme">🌙/🌞</button>
+            <button class="btn secondary" id="clearChat" title="Clear chat">🧹 Clear</button>
+          </div>
+          <button class="btn secondary" id="toggleOkx" title="Toggle OKX visuals">⬛⬜ OKX</button>
+          <button class="btn" id="memeBoost">⚡ Meme Booster</button>
+        </div>
+      </header>
+
+      <main class="chat">
+        <div class="messages" id="messages" aria-live="polite" aria-atomic="false"></div>
+        <div class="panel-stickers" id="stickersPanel" aria-label="Sticker picker">
+          <div class="stickers-grid" id="stickersGrid"></div>
+        </div>
+        <div class="confetti" id="confetti"></div>
+      </main>
+
+      <footer class="input">
+        <div class="tools">
+          <label class="icon-btn" title="Send image/GIF">
+            <input class="visually-hidden" type="file" id="fileInput" accept="image/*" />
+            📎
+          </label>
+          <button class="icon-btn" id="toggleStickers" title="Sticker panel">🥳</button>
+        </div>
+        <div class="field">
+          <input type="text" id="textInput" placeholder="Say something... Supports http image/GIF URLs, or just type meme lines!" />
+        </div>
+        <button class="btn send-btn" id="sendBtn">Send 🚀</button>
+      </footer>
+    </div>
+
+    <template id="tpl-bubble">
+      <div class="bubble"><div class="content"></div><div class="meta"></div></div>
+    </template>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <script>
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyA5Z5ieEbAcfQX0kxGSn9ldGXhzvAwx_8M",
+        authDomain: "chat-294cc.firebaseapp.com",
+        databaseURL: "https://chat-294cc-default-rtdb.firebaseio.com",
+        projectId: "chat-294cc",
+        storageBucket: "chat-294cc.firebasestorage.app",
+        messagingSenderId: "913615304269",
+        appId: "1:913615304269:web:0274ffaccb8e6b678e4e04",
+        measurementId: "G-SJR9NDW86B"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+      const state = {
+        theme: (localStorage.getItem('meme-theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')),
+        user: null,
+        unsubMessages: null,
+      };
+
+      const el = {
+        app: document.getElementById('app'),
+        messages: document.getElementById('messages'),
+        textInput: document.getElementById('textInput'),
+        sendBtn: document.getElementById('sendBtn'),
+        fileInput: document.getElementById('fileInput'),
+        toggleStickers: document.getElementById('toggleStickers'),
+        stickersPanel: document.getElementById('stickersPanel'),
+        stickersGrid: document.getElementById('stickersGrid'),
+        memeBoost: document.getElementById('memeBoost'),
+        toggleOkx: document.getElementById('toggleOkx'),
+        confetti: document.getElementById('confetti'),
+        toggleTheme: document.getElementById('toggleTheme'),
+        clearChat: document.getElementById('clearChat'),
+      };
+
+      const STICKERS = [
+        '😂','🤣','😎','🤯','🔥','💀','🙃','🤝','👀','🫠','🥵','🥶','🤡','🍿','🫵','💥','🎯','✨','🚀','🧠',
+        '😼','😹','🙀','🐸','🦆','🐶','🐱','🦄','🐥','🐢',
+        '👍','👎','👌','🙏','👏','🙌','💪','🫡','🤌','🫶',
+        '🏆','💎','🧨','🎉','🎊','🎮','🎵','🎧','🕶️','🧃',
+        // OKX/crypto vibes
+        '₿','🪙','💹','📈','📉','💰','🤑','⛏️','💱','🔐'
+      ];
+
+      
+
+      const isImageUrl = (text) => /^(https?:\/\/\S+\.(?:png|jpe?g|gif|webp|bmp))(\?.*)?$/i.test(text.trim());
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+        localStorage.setItem('meme-theme', theme);
+      }
+
+      function uid() { return 'm-' + Math.random().toString(36).slice(2, 9) }
+
+      function formatTime(ms) {
+        const d = ms ? new Date(ms) : new Date();
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      function createBubble() {
+        const tpl = document.getElementById('tpl-bubble');
+        return tpl.content.firstElementChild.cloneNode(true);
+      }
+
+      function renderMessage(message) {
+        const bubble = createBubble();
+        const isMine = state.user && message.uid === state.user.uid;
+        bubble.classList.add('bubble', isMine ? 'me' : 'other');
+        const content = bubble.querySelector('.content');
+        const meta = bubble.querySelector('.meta');
+
+        if (message.type === 'image' && message.url) {
+          const img = new Image();
+          img.src = message.url;
+          img.alt = message.alt || 'image';
+          img.className = 'media';
+          content.appendChild(img);
+        } else if (message.type === 'sticker' && message.text) {
+          const div = document.createElement('div');
+          div.className = 'sticker';
+          div.textContent = message.text;
+          content.appendChild(div);
+        } else {
+          content.textContent = message.text || '';
+        }
+
+        const who = isMine ? 'You' : (message.name || 'Anonymous');
+        const when = formatTime(message.createdAt);
+        meta.innerHTML = `<span class="tag">${who}</span><span>${when}</span>`;
+
+        el.messages.appendChild(bubble);
+        scrollToBottom();
+      }
+
+      function scrollToBottom() {
+        requestAnimationFrame(() => {
+          el.messages.scrollTop = el.messages.scrollHeight + 9999;
+        });
+      }
+
+      function sendText(text) {
+        if (!text || !text.trim() || !state.user) return;
+        const trimmed = text.trim();
+        if (isImageUrl(trimmed)) {
+          pushMessage({ type: 'image', url: trimmed });
+        } else {
+          pushMessage({ type: 'text', text: trimmed });
+        }
+      }
+
+      function openStickers(open) {
+        if (open) el.stickersPanel.classList.add('open');
+        else el.stickersPanel.classList.remove('open');
+      }
+
+      function buildStickers() {
+        el.stickersGrid.innerHTML = '';
+        STICKERS.forEach(s => {
+          const b = document.createElement('button');
+          b.className = 'sticker-item';
+          b.type = 'button';
+          b.textContent = s;
+          b.addEventListener('click', () => {
+            pushMessage({ type: 'sticker', text: s });
+            openStickers(false);
+          });
+          el.stickersGrid.appendChild(b);
+        });
+      }
+
+      function memeBoost() {
+        const last = Array.from(el.messages.querySelectorAll('.bubble.me')).pop();
+        if (!last) return;
+        last.classList.add('meme-shake', 'meme-rainbow', 'meme-glow');
+        setTimeout(() => last.classList.remove('meme-shake'), 700);
+        sprinkleConfetti();
+      }
+
+      function sprinkleConfetti() {
+        const colors = ['#ff4d6d', '#ffd166', '#06d6a0', '#118ab2', '#a29bfe', '#f72585'];
+        const howMany = 38;
+        for (let i = 0; i < howMany; i++) {
+          const p = document.createElement('i');
+          const x = Math.random() * 100;
+          const delay = Math.random() * .2;
+          const rot = Math.random() * 360;
+          const dur = 0.8 + Math.random() * 0.8;
+          p.style.left = x + '%';
+          p.style.top = - (Math.random() * 10 + 2) + 'px';
+          p.style.background = colors[i % colors.length];
+          p.style.transform = `translateY(-20px) rotate(${rot}deg)`;
+          p.style.opacity = '1';
+          p.style.transition = `transform ${dur}s cubic-bezier(.2,.9,.2,1), opacity ${dur}s ease-in`;
+          el.confetti.appendChild(p);
+          requestAnimationFrame(() => {
+            p.style.transform = `translateY(${window.innerHeight * 0.6 + Math.random()*120}px) rotate(${rot + 360}deg)`;
+            p.style.opacity = '.9';
+          });
+          setTimeout(() => p.remove(), dur * 1000 + 400);
+        }
+      }
+
+      async function onFileChosen(file) {
+        if (!file || !state.user) return;
+        const storageRef = firebase.storage().ref();
+        const path = `uploads/${state.user.uid}/${Date.now()}-${file.name}`;
+        const fileRef = storageRef.child(path);
+        await fileRef.put(file);
+        const url = await fileRef.getDownloadURL();
+        pushMessage({ type: 'image', url });
+      }
+
+      function onSend() {
+        const text = el.textInput.value;
+        if (!text.trim()) return;
+        sendText(text);
+        el.textInput.value = '';
+      }
+
+      
+
+      function initTheme() {
+        applyTheme(state.theme);
+        el.toggleTheme.addEventListener('click', () => {
+          state.theme = state.theme === 'light' ? 'dark' : 'light';
+          applyTheme(state.theme);
+        });
+      }
+
+      // OKX brand mode
+      state.brand = localStorage.getItem('meme-brand') || 'default';
+      function applyBrand(brand) {
+        const enable = brand === 'okx';
+        document.documentElement.setAttribute('data-brand', enable ? 'okx' : 'default');
+        el.app.classList.toggle('okx', enable);
+        localStorage.setItem('meme-brand', enable ? 'okx' : 'default');
+      }
+
+      function initEvents() {
+        el.sendBtn.addEventListener('click', onSend);
+        el.textInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            onSend();
+          }
+        });
+        
+        el.fileInput.addEventListener('change', (e) => onFileChosen(e.target.files[0]));
+        el.toggleStickers.addEventListener('click', () => openStickers(!el.stickersPanel.classList.contains('open')));
+        el.memeBoost.addEventListener('click', memeBoost);
+        el.toggleOkx.addEventListener('click', () => {
+          state.brand = (state.brand === 'okx') ? 'default' : 'okx';
+          applyBrand(state.brand);
+        });
+        document.addEventListener('click', (e) => {
+          if (!el.stickersPanel.contains(e.target) && e.target !== el.toggleStickers) {
+            openStickers(false);
+          }
+        });
+        el.clearChat.addEventListener('click', async () => {
+          if (confirm('This will delete all messages from the cloud (affects everyone). Continue?')) {
+            await firebase.database().ref('messages').remove();
+            el.messages.innerHTML = '';
+          }
+        });
+      }
+
+      function randomName() {
+        const animals = ['Cat','Dog','Chick','Duck','Puffer','Panda','Seal','Hamster','SeaCuke','Dragon'];
+        const idx = Math.floor(Math.random()*animals.length);
+        return `Meme-${animals[idx]}#${Math.floor(1000+Math.random()*9000)}`;
+      }
+
+      function ensureAuth() {
+        return new Promise((resolve, reject) => {
+          firebase.auth().onAuthStateChanged(async (user) => {
+            try {
+              if (!user) {
+                await firebase.auth().signInAnonymously();
+                return; // wait for next onAuthStateChanged
+              }
+              const savedName = localStorage.getItem('meme-name') || randomName();
+              localStorage.setItem('meme-name', savedName);
+              state.user = { uid: user.uid, name: savedName };
+              resolve(state.user);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        });
+      }
+
+      function listenMessages() {
+        const ref = firebase.database().ref('messages').limitToLast(200);
+        ref.off();
+        ref.on('child_added', (snap) => {
+          const msg = snap.val();
+          if (!msg) return;
+          renderMessage(msg);
+        });
+      }
+
+      function pushMessage(payload) {
+        const base = {
+          uid: state.user.uid,
+          name: state.user.name,
+          createdAt: Date.now(),
+        };
+        firebase.database().ref('messages').push({ ...base, ...payload });
+      }
+
+      async function init() {
+        initTheme();
+        applyBrand(state.brand);
+        buildStickers();
+        initEvents();
+        try {
+          await ensureAuth();
+          listenMessages();
+        } catch (e) {
+          console.error('Auth error', e);
+        }
+      }
+
+      // Allow dropping image files
+      document.addEventListener('dragover', (e) => { e.preventDefault(); });
+      document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f && f.type.startsWith('image/')) onFileChosen(f);
+      });
+
+      // Paste image URL support
+      document.addEventListener('paste', (e) => {
+        const text = e.clipboardData.getData('text');
+        if (isImageUrl(text)) {
+          sendText(text);
+        }
+      });
+
+      // Kick-off
+      init();
+    </script>
+  </body>
+</html>
+
+
