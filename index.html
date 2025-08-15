@@ -1,902 +1,351 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Meme Chatroom · Ultra-hype Meme Chatroom</title>
-    <meta name="color-scheme" content="light dark" />
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后室探索档案 | The Backrooms Archive</title>
     <style>
-      :root {
-        --bg: #0b1021;
-        --bg-accent: #12173a;
-        --panel: #0f1431;
-        --text: #e6e8ff;
-        --muted: #aab0ff;
-        --brand: #8a2be2;
-        --brand-2: #00f5d4;
-        --brand-3: #ffd166;
-        --bubble-me: #2c1f4a;
-        --bubble-bot: #15243f;
-        --input: #14193a;
-        --shadow: 0 10px 25px rgba(0,0,0,.35);
-        --radius: 16px;
-      }
-
-      /* Light theme overrides */
-      :root[data-theme="light"] {
-        --bg: #faf7ff;
-        --bg-accent: #fff2ff;
-        --panel: #ffffff;
-        --text: #1a1033;
-        --muted: #4a3f7a;
-        --brand: #6a00f4;
-        --brand-2: #00c2a8;
-        --brand-3: #ff7a59;
-        --bubble-me: #efe4ff;
-        --bubble-bot: #ecf6ff;
-        --input: #ffffff;
-        --shadow: 0 10px 25px rgba(0,0,0,.12);
-      }
-
-      /* OKX brand mode overrides */
-      html[data-brand="okx"] body {
-        background: #0a0a0a;
-      }
-      html[data-brand="okx"] .app::before {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        background-image:
-          repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px),
-          repeating-linear-gradient(-45deg, rgba(255,255,255,.03) 0 10px, transparent 10px 20px);
-        pointer-events: none;
-        border-radius: inherit;
-        mix-blend-mode: overlay;
-      }
-      html[data-brand="okx"] .logo {
-        background: conic-gradient(from 180deg, #000, #fff, #000);
-        box-shadow: 0 6px 18px rgba(0,0,0,.6);
-        animation: none;
-      }
-      .okx-badge {
-        display: inline-grid;
-        grid-auto-flow: column;
-        align-items: center;
-        gap: 6px;
-        font-weight: 900;
-        letter-spacing: .5px;
-        background: #000;
-        color: #fff;
-        border: 1px solid rgba(255,255,255,.15);
-        padding: 2px 8px;
-        border-radius: 8px;
-        font-size: 11px;
-      }
-      .okx-squares {
-        display: grid;
-        grid-template-columns: repeat(3, 8px);
-        gap: 2px;
-      }
-      .okx-squares i { width: 8px; height: 8px; display: block; background: currentColor }
-      .ca-badge {
-        display: inline-grid;
-        grid-auto-flow: column;
-        align-items: center;
-        gap: 6px;
-        font-weight: 900;
-        letter-spacing: .5px;
-        background: rgba(255,255,255,.06);
-        color: var(--text);
-        border: 1px solid rgba(255,255,255,.15);
-        padding: 2px 8px;
-        border-radius: 8px;
-        font-size: 11px;
-        cursor: pointer;
-      }
-      .ca-badge code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace }
-      :root[data-theme="light"] .ca-badge { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12); color: var(--text) }
-
-      .users-badge {
-        display: inline-grid;
-        grid-auto-flow: column;
-        align-items: center;
-        gap: 6px;
-        font-weight: 800;
-        letter-spacing: .2px;
-        background: rgba(255,255,255,.06);
-        color: var(--text);
-        border: 1px solid rgba(255,255,255,.15);
-        padding: 2px 8px;
-        border-radius: 8px;
-        font-size: 11px;
-      }
-      :root[data-theme="light"] .users-badge { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12) }
-
-      .link-btn {
-        background: transparent;
-        border: 0;
-        color: var(--muted);
-        cursor: pointer;
-        font-size: 11px;
-        padding: 0 6px;
-      }
-      .link-btn:hover { filter: brightness(1.2) }
-
-      .typing-bar {
-        padding: 0 16px 8px 16px;
-        color: var(--muted);
-        display: none;
-        align-items: center;
-        gap: 8px;
-      }
-      .typing-bar.open { display: inline-grid }
-      html[data-brand="okx"] .btn { background: linear-gradient(135deg, #000, #222); color: #fff; border: 1px solid rgba(255,255,255,.12) }
-      html[data-brand="okx"] .btn.secondary { background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.05)) }
-
-      html, body {
-        height: 100%;
-      }
-
-      body {
-        margin: 0;
-        color: var(--text);
-        background: radial-gradient(1000px 600px at 10% -10%, rgba(138,43,226,.35), transparent 60%),
-                    radial-gradient(800px 600px at 110% 10%, rgba(0,245,212,.25), transparent 60%),
-                    linear-gradient(180deg, var(--bg-accent), var(--bg));
-        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-        display: grid;
-        place-items: center;
-      }
-
-      .app {
-        width: min(1024px, 98vw);
-        height: min(760px, 92vh);
-        background: var(--panel);
-        border-radius: calc(var(--radius) + 2px);
-        box-shadow: var(--shadow);
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        overflow: hidden;
-        position: relative;
-      }
-
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 16px;
-        background:
-          linear-gradient(90deg, rgba(106,0,244,.25), rgba(0,245,212,.15) 50%, rgba(255,209,102,.25));
-        border-bottom: 1px solid rgba(255,255,255,.08);
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .logo {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        background: conic-gradient(from 180deg, var(--brand), var(--brand-2), var(--brand-3), var(--brand));
-        position: relative;
-        box-shadow: 0 6px 18px rgba(138,43,226,.45);
-        animation: hue 6s linear infinite;
-      }
-
-      .logo::after {
-        content: "😎";
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        font-size: 22px;
-        filter: drop-shadow(0 2px 2px rgba(0,0,0,.3));
-      }
-
-      .title {
-        display: grid;
-        line-height: 1.1;
-      }
-      .title b {
-        font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-        letter-spacing: 0.5px;
-        font-size: 18px;
-      }
-      .title span {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        appearance: none;
-        border: 0;
-        border-radius: 12px;
-        padding: 8px 12px;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--brand), var(--brand-2));
-        color: #fff;
-        cursor: pointer;
-        transition: transform .15s ease, filter .15s ease;
-      }
-      .btn.secondary {
-        background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-        color: var(--text);
-        border: 1px solid rgba(255,255,255,.08);
-      }
-      .btn:active {
-        transform: translateY(1px) scale(.98);
-        filter: brightness(.95);
-      }
-
-      .chat {
-        position: relative;
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .messages {
-        overflow: auto;
-        padding: 18px 16px 10px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .bubble {
-        max-width: 72%;
-        padding: 12px 14px;
-        border-radius: 14px;
-        position: relative;
-        word-wrap: break-word;
-        box-shadow: 0 8px 16px rgba(0,0,0,.2);
-        animation: pop .18s ease;
-      }
-      .bubble.me {
-        margin-left: auto;
-        background: linear-gradient(135deg, var(--bubble-me), rgba(138,43,226,.18));
-        border: 1px solid rgba(138,43,226,.25);
-      }
-      .bubble.bot {
-        margin-right: auto;
-        background: linear-gradient(135deg, var(--bubble-bot), rgba(0,245,212,.12));
-        border: 1px solid rgba(0,245,212,.25);
-      }
-      .bubble.other {
-        margin-right: auto;
-        background: linear-gradient(135deg, var(--bubble-bot), rgba(0,245,212,.12));
-        border: 1px solid rgba(0,245,212,.25);
-      }
-      .bubble .meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--muted);
-        font-size: 11px;
-        margin-top: 6px;
-      }
-      .bubble .meta .tag {
-        font-weight: 800;
-        letter-spacing: .2px;
-      }
-
-      .bubble img.media {
-        max-width: 100%;
-        border-radius: 12px;
-        display: block;
-      }
-      .bubble .sticker {
-        font-size: 42px;
-        line-height: 1.1;
-      }
-
-      .input {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 10px;
-        padding: 12px;
-        border-top: 1px solid rgba(255,255,255,.08);
-        background: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.06));
-      }
-      .tools {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .field {
-        display: grid;
-        align-items: center;
-        grid-template-columns: 1fr auto;
-        gap: 8px;
-        background: var(--input);
-        border-radius: 12px;
-        padding: 6px 10px 6px 12px;
-        border: 1px solid rgba(255,255,255,.08);
-      }
-      .field input[type="text"] {
-        background: transparent;
-        border: 0;
-        outline: none;
-        color: var(--text);
-        font-size: 15px;
-        padding: 8px 0;
-      }
-      .field .right {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .icon-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: grid;
-        place-items: center;
-        background: rgba(255,255,255,.06);
-        border: 1px solid rgba(255,255,255,.08);
-        color: var(--text);
-        cursor: pointer;
-        transition: transform .15s ease, background .15s ease, filter .15s ease;
-      }
-      .icon-btn:hover { background: rgba(255,255,255,.12) }
-      .icon-btn:active { transform: translateY(1px) scale(.98); filter: brightness(.95) }
-
-      .send-btn { padding: 0 16px }
-
-      .panel-stickers {
-        position: absolute;
-        left: 12px;
-        right: 12px;
-        bottom: 70px;
-        z-index: 5;
-        background: var(--panel);
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 14px;
-        box-shadow: var(--shadow);
-        padding: 10px;
-        display: none;
-        max-height: 200px;
-        overflow: auto;
-      }
-      .panel-stickers.open { display: grid }
-      .stickers-grid {
-        display: grid;
-        grid-template-columns: repeat(10, minmax(38px, 1fr));
-        gap: 8px;
-      }
-      .sticker-item {
-        display: grid;
-        place-items: center;
-        font-size: 26px;
-        padding: 8px 4px;
-        border-radius: 10px;
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.08);
-        cursor: pointer;
-        transition: transform .15s ease, filter .15s ease;
-      }
-      .sticker-item:active { transform: scale(.95) }
-
-      .theme-toggle {
-        display: grid;
-        grid-auto-flow: column;
-        gap: 6px;
-      }
-
-      /* Meme booster effects */
-      .meme-shake { animation: shake .55s ease-in-out }
-      .meme-rainbow { background-image: linear-gradient(90deg, #ff0040, #ffbf00, #00df7e, #00bfff, #8a2be2); background-size: 400% 400%; animation: hue 4s linear infinite, moveBg 6s ease infinite }
-      .meme-glow { box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 0 24px rgba(255,0,128,.35) !important }
-
-      /* Typing indicator */
-      .typing {
-        display: inline-grid;
-        grid-auto-flow: column;
-        gap: 6px;
-        align-items: center;
-      }
-      .typing .dot {
-        width: 8px; height: 8px; border-radius: 50%;
-        background: var(--muted);
-        animation: bounce 1.2s ease-in-out infinite;
-      }
-      .typing .dot:nth-child(2) { animation-delay: .2s }
-      .typing .dot:nth-child(3) { animation-delay: .4s }
-
-      /* Confetti */
-      .confetti { position: absolute; pointer-events: none; inset: 0 }
-      .confetti i {
-        position: absolute;
-        width: 10px; height: 14px;
-        background: var(--brand);
-        transform: translateY(-20px) rotate(0);
-        opacity: .95;
-        will-change: transform;
-      }
-
-      @keyframes hue { from { filter: hue-rotate(0deg) } to { filter: hue-rotate(360deg) } }
-      @keyframes moveBg { 0% { background-position: 0% 50% } 50% { background-position: 100% 50% } 100% { background-position: 0% 50% } }
-      @keyframes pop { from { transform: translateY(8px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
-      @keyframes shake { 0% { transform: rotate(0) } 20% { transform: rotate(2deg) } 40% { transform: rotate(-2deg) } 60% { transform: rotate(2deg) } 80% { transform: rotate(-2deg) } 100% { transform: rotate(0) } }
-      @keyframes bounce { 0%, 80%, 100% { transform: translateY(0) } 40% { transform: translateY(-8px) } }
-
-      /* Utilities */
-      .hidden { display: none !important }
-      .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-      @media (max-width: 720px) {
-        .bubble { max-width: 88% }
-        .stickers-grid { grid-template-columns: repeat(8, minmax(34px, 1fr)) }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app" id="app">
-      <header class="header">
-        <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
-          <div class="title">
-            <b>MEME CHATROOM</b>
-            <span>Colors maxed · Animations maxed · Meme culture packed</span>
-          </div>
-          <span class="okx-badge" title="OKX-inspired visuals">
-            <span class="okx-squares" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            OKX MODE
-          </span>
-        </div>
-        <div class="actions">
-          <button class="ca-badge" id="copyCa" title="Click to copy contract address" aria-label="Copy contract address">
-            CA:
-            <code>0x85c0...12bd</code>
-          </button>
-          <span class="users-badge" id="usersBadge" title="Online users">👥 <b id="usersCount">1</b></span>
-          <button class="btn secondary" id="renameBtn" title="Change your display name">✏️ Rename</button>
-          <div class="theme-toggle">
-            <button class="btn secondary" id="toggleTheme" title="Toggle theme">🌙/🌞</button>
-            <button class="btn secondary" id="clearChat" title="Clear chat">🧹 Clear</button>
-          </div>
-          <button class="btn secondary" id="toggleOkx" title="Toggle OKX visuals">⬛⬜ OKX</button>
-          <button class="btn" id="memeBoost">⚡ Meme Booster</button>
-        </div>
-      </header>
-
-      <main class="chat">
-        <div class="messages" id="messages" aria-live="polite" aria-atomic="false"></div>
-        <div class="typing-bar" id="typingBar">
-          <span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-          <span id="typingText">Someone is typing…</span>
-        </div>
-        <div class="panel-stickers" id="stickersPanel" aria-label="Sticker picker">
-          <div class="stickers-grid" id="stickersGrid"></div>
-        </div>
-        <div class="confetti" id="confetti"></div>
-      </main>
-
-      <footer class="input">
-        <div class="tools">
-          <label class="icon-btn" title="Send image/GIF">
-            <input class="visually-hidden" type="file" id="fileInput" accept="image/*" />
-            📎
-          </label>
-          <button class="icon-btn" id="toggleStickers" title="Sticker panel">🥳</button>
-        </div>
-        <div class="field">
-          <input type="text" id="textInput" placeholder="Say something... Supports http image/GIF URLs, or just type meme lines!" />
-        </div>
-        <button class="btn send-btn" id="sendBtn">Send 🚀</button>
-      </footer>
-    </div>
-
-    <template id="tpl-bubble">
-      <div class="bubble"><div class="content"></div><div class="meta"></div></div>
-    </template>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-    <script>
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-      const firebaseConfig = {
-        apiKey: "AIzaSyA5Z5ieEbAcfQX0kxGSn9ldGXhzvAwx_8M",
-        authDomain: "chat-294cc.firebaseapp.com",
-        databaseURL: "https://chat-294cc-default-rtdb.firebaseio.com",
-        projectId: "chat-294cc",
-        storageBucket: "chat-294cc.firebasestorage.app",
-        messagingSenderId: "913615304269",
-        appId: "1:913615304269:web:0274ffaccb8e6b678e4e04",
-        measurementId: "G-SJR9NDW86B"
-      };
-      firebase.initializeApp(firebaseConfig);
-    </script>
-
-    <script>
-      const state = {
-        theme: (localStorage.getItem('meme-theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')),
-        user: null,
-        unsubMessages: null,
-      };
-
-      const el = {
-        app: document.getElementById('app'),
-        messages: document.getElementById('messages'),
-        textInput: document.getElementById('textInput'),
-        sendBtn: document.getElementById('sendBtn'),
-        fileInput: document.getElementById('fileInput'),
-        toggleStickers: document.getElementById('toggleStickers'),
-        stickersPanel: document.getElementById('stickersPanel'),
-        stickersGrid: document.getElementById('stickersGrid'),
-        memeBoost: document.getElementById('memeBoost'),
-        toggleOkx: document.getElementById('toggleOkx'),
-        confetti: document.getElementById('confetti'),
-        toggleTheme: document.getElementById('toggleTheme'),
-        clearChat: document.getElementById('clearChat'),
-        copyCa: document.getElementById('copyCa'),
-        usersCount: document.getElementById('usersCount'),
-        typingBar: document.getElementById('typingBar'),
-        typingText: document.getElementById('typingText'),
-        renameBtn: document.getElementById('renameBtn'),
-      };
-
-      const STICKERS = [
-        '😂','🤣','😎','🤯','🔥','💀','🙃','🤝','👀','🫠','🥵','🥶','🤡','🍿','🫵','💥','🎯','✨','🚀','🧠',
-        '😼','😹','🙀','🐸','🦆','🐶','🐱','🦄','🐥','🐢',
-        '👍','👎','👌','🙏','👏','🙌','💪','🫡','🤌','🫶',
-        '🏆','💎','🧨','🎉','🎊','🎮','🎵','🎧','🕶️','🧃',
-        // OKX/crypto vibes
-        '₿','🪙','💹','📈','📉','💰','🤑','⛏️','💱','🔐'
-      ];
-
-      
-
-      const isImageUrl = (text) => /^(https?:\/\/\S+\.(?:png|jpe?g|gif|webp|bmp))(\?.*)?$/i.test(text.trim());
-
-      function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
-        localStorage.setItem('meme-theme', theme);
-      }
-
-      function uid() { return 'm-' + Math.random().toString(36).slice(2, 9) }
-
-      function formatTime(ms) {
-        const d = ms ? new Date(ms) : new Date();
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-
-      function createBubble() {
-        const tpl = document.getElementById('tpl-bubble');
-        return tpl.content.firstElementChild.cloneNode(true);
-      }
-
-      function renderMessage(message) {
-        const bubble = createBubble();
-        const isMine = state.user && message.uid === state.user.uid;
-        bubble.classList.add('bubble', isMine ? 'me' : 'other');
-        const content = bubble.querySelector('.content');
-        const meta = bubble.querySelector('.meta');
-
-        if (message.type === 'image' && message.url) {
-          const img = new Image();
-          img.src = message.url;
-          img.alt = message.alt || 'image';
-          img.className = 'media';
-          content.appendChild(img);
-        } else if (message.type === 'sticker' && message.text) {
-          const div = document.createElement('div');
-          div.className = 'sticker';
-          div.textContent = message.text;
-          content.appendChild(div);
-        } else {
-          const text = message.text || '';
-          const withLinks = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1<\/a>');
-          content.innerHTML = withLinks;
+        :root {
+            --primary-color: #e6c229;
+            --secondary-color: #3a3a3a;
+            --background-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent-color: #8b6f1a;
+            --danger-color: #8b1a1a;
         }
-
-        const who = isMine ? 'You' : (message.name || 'Anonymous');
-        const when = formatTime(message.createdAt);
-        const actions = isMine ? `<button class="link-btn" data-act="copy">Copy<\/button><button class="link-btn" data-act="delete" data-id="${message.id || ''}">Delete<\/button>` : `<button class="link-btn" data-act="copy">Copy<\/button>`;
-        meta.innerHTML = `<span class="tag">${who}<\/span><span>${when}<\/span>${actions}`;
-
-        meta.addEventListener('click', async (e) => {
-          const target = e.target;
-          if (!(target instanceof HTMLElement)) return;
-          const act = target.getAttribute('data-act');
-          if (!act) return;
-          const textToCopy = message.type === 'text' ? (message.text || '') : (message.url || '');
-          if (act === 'copy' && textToCopy) {
-            try { await navigator.clipboard.writeText(textToCopy); target.textContent = 'Copied'; setTimeout(() => target.textContent = 'Copy', 1000); } catch (_) {}
-          }
-          if (act === 'delete' && isMine) {
-            if (message.id) {
-              await firebase.database().ref('messages/' + message.id).remove();
-              bubble.remove();
-            }
-          }
-        });
-
-        el.messages.appendChild(bubble);
-        scrollToBottom();
-      }
-
-      function scrollToBottom() {
-        requestAnimationFrame(() => {
-          el.messages.scrollTop = el.messages.scrollHeight + 9999;
-        });
-      }
-
-      function sendText(text) {
-        if (!text || !text.trim() || !state.user) return;
-        const trimmed = text.trim();
-        if (isImageUrl(trimmed)) {
-          pushMessage({ type: 'image', url: trimmed });
-        } else {
-          pushMessage({ type: 'text', text: trimmed });
-        }
-      }
-
-      function openStickers(open) {
-        if (open) el.stickersPanel.classList.add('open');
-        else el.stickersPanel.classList.remove('open');
-      }
-
-      function buildStickers() {
-        el.stickersGrid.innerHTML = '';
-        STICKERS.forEach(s => {
-          const b = document.createElement('button');
-          b.className = 'sticker-item';
-          b.type = 'button';
-          b.textContent = s;
-          b.addEventListener('click', () => {
-            pushMessage({ type: 'sticker', text: s });
-            openStickers(false);
-          });
-          el.stickersGrid.appendChild(b);
-        });
-      }
-
-      function memeBoost() {
-        const last = Array.from(el.messages.querySelectorAll('.bubble.me')).pop();
-        if (!last) return;
-        last.classList.add('meme-shake', 'meme-rainbow', 'meme-glow');
-        setTimeout(() => last.classList.remove('meme-shake'), 700);
-        sprinkleConfetti();
-      }
-
-      function sprinkleConfetti() {
-        const colors = ['#ff4d6d', '#ffd166', '#06d6a0', '#118ab2', '#a29bfe', '#f72585'];
-        const howMany = 38;
-        for (let i = 0; i < howMany; i++) {
-          const p = document.createElement('i');
-          const x = Math.random() * 100;
-          const delay = Math.random() * .2;
-          const rot = Math.random() * 360;
-          const dur = 0.8 + Math.random() * 0.8;
-          p.style.left = x + '%';
-          p.style.top = - (Math.random() * 10 + 2) + 'px';
-          p.style.background = colors[i % colors.length];
-          p.style.transform = `translateY(-20px) rotate(${rot}deg)`;
-          p.style.opacity = '1';
-          p.style.transition = `transform ${dur}s cubic-bezier(.2,.9,.2,1), opacity ${dur}s ease-in`;
-          el.confetti.appendChild(p);
-          requestAnimationFrame(() => {
-            p.style.transform = `translateY(${window.innerHeight * 0.6 + Math.random()*120}px) rotate(${rot + 360}deg)`;
-            p.style.opacity = '.9';
-          });
-          setTimeout(() => p.remove(), dur * 1000 + 400);
-        }
-      }
-
-      async function onFileChosen(file) {
-        if (!file || !state.user) return;
-        const storageRef = firebase.storage().ref();
-        const path = `uploads/${state.user.uid}/${Date.now()}-${file.name}`;
-        const fileRef = storageRef.child(path);
-        await fileRef.put(file);
-        const url = await fileRef.getDownloadURL();
-        pushMessage({ type: 'image', url });
-      }
-
-      function onSend() {
-        const text = el.textInput.value;
-        if (!text.trim()) return;
-        sendText(text);
-        el.textInput.value = '';
-      }
-
-      
-
-      function initTheme() {
-        applyTheme(state.theme);
-        el.toggleTheme.addEventListener('click', () => {
-          state.theme = state.theme === 'light' ? 'dark' : 'light';
-          applyTheme(state.theme);
-        });
-      }
-
-      // OKX brand mode
-      state.brand = localStorage.getItem('meme-brand') || 'default';
-      function applyBrand(brand) {
-        const enable = brand === 'okx';
-        document.documentElement.setAttribute('data-brand', enable ? 'okx' : 'default');
-        el.app.classList.toggle('okx', enable);
-        localStorage.setItem('meme-brand', enable ? 'okx' : 'default');
-      }
-
-      function initEvents() {
-        el.sendBtn.addEventListener('click', onSend);
-        el.textInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            onSend();
-          }
-        });
-        el.textInput.addEventListener('input', () => {
-          if (!state.user) return;
-          const typingRef = firebase.database().ref(`typing/${state.user.uid}`);
-          const now = Date.now();
-          typingRef.set({ name: state.user.name, ts: now });
-          clearTimeout(state._typingTimer);
-          state._typingTimer = setTimeout(() => typingRef.remove(), 2000);
-        });
         
-        el.fileInput.addEventListener('change', (e) => onFileChosen(e.target.files[0]));
-        el.toggleStickers.addEventListener('click', () => openStickers(!el.stickersPanel.classList.contains('open')));
-        el.memeBoost.addEventListener('click', memeBoost);
-        el.renameBtn.addEventListener('click', () => {
-          const current = state.user?.name || localStorage.getItem('meme-name') || '';
-          const name = prompt('Enter a new display name:', current);
-          if (name && name.trim()) {
-            localStorage.setItem('meme-name', name.trim());
-            if (state.user) state.user.name = name.trim();
-          }
-        });
-        el.toggleOkx.addEventListener('click', () => {
-          state.brand = (state.brand === 'okx') ? 'default' : 'okx';
-          applyBrand(state.brand);
-        });
-        if (el.copyCa) {
-          el.copyCa.addEventListener('click', async () => {
-            const full = '0x85c0fd544BfDe1A0BbAc7a841E546F98f4ba12bd';
-            try {
-              await navigator.clipboard.writeText(full);
-              const prev = el.copyCa.innerHTML;
-              el.copyCa.innerHTML = 'Copied ✅';
-              setTimeout(() => { el.copyCa.innerHTML = prev; }, 1200);
-            } catch (_) {
-              const prev = el.copyCa.innerHTML;
-              el.copyCa.innerHTML = 'Copy failed ❌';
-              setTimeout(() => { el.copyCa.innerHTML = prev; }, 1200);
-            }
-          });
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://example.com/backrooms-bg.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
         }
-        document.addEventListener('click', (e) => {
-          if (!el.stickersPanel.contains(e.target) && e.target !== el.toggleStickers) {
-            openStickers(false);
-          }
-        });
-        el.clearChat.addEventListener('click', async () => {
-          if (confirm('This will delete all messages from the cloud (affects everyone). Continue?')) {
-            await firebase.database().ref('messages').remove();
-            el.messages.innerHTML = '';
-          }
-        });
-      }
-
-      function randomName() {
-        const animals = ['Cat','Dog','Chick','Duck','Puffer','Panda','Seal','Hamster','SeaCuke','Dragon'];
-        const idx = Math.floor(Math.random()*animals.length);
-        return `Meme-${animals[idx]}#${Math.floor(1000+Math.random()*9000)}`;
-      }
-
-      function ensureAuth() {
-        return new Promise((resolve, reject) => {
-          firebase.auth().onAuthStateChanged(async (user) => {
-            try {
-              if (!user) {
-                await firebase.auth().signInAnonymously();
-                return; // wait for next onAuthStateChanged
-              }
-              const savedName = localStorage.getItem('meme-name') || randomName();
-              localStorage.setItem('meme-name', savedName);
-              state.user = { uid: user.uid, name: savedName };
-              // Presence
-              const presenceRef = firebase.database().ref(`presence/${user.uid}`);
-              const infoRef = firebase.database().ref('.info/connected');
-              infoRef.on('value', (snap) => {
-                if (snap.val() === true) {
-                  presenceRef.onDisconnect().remove();
-                  presenceRef.set({ name: savedName, ts: firebase.database.ServerValue.TIMESTAMP });
-                }
-              });
-              firebase.database().ref('presence').on('value', (snap) => {
-                const count = snap.numChildren();
-                if (el.usersCount) el.usersCount.textContent = String(count);
-              });
-              resolve(state.user);
-            } catch (err) {
-              reject(err);
-            }
-          });
-        });
-      }
-
-      function listenMessages() {
-        const ref = firebase.database().ref('messages').limitToLast(200);
-        ref.off();
-        ref.on('child_added', (snap) => {
-          const msg = snap.val();
-          if (!msg) return;
-          msg.id = snap.key;
-          renderMessage(msg);
-        });
-        // typing indicator
-        const typingRef = firebase.database().ref('typing');
-        typingRef.off();
-        typingRef.on('value', (snap) => {
-          const typing = snap.val() || {};
-          const otherTyping = Object.keys(typing).filter(uid => uid !== state.user?.uid);
-          if (otherTyping.length > 0) {
-            el.typingBar.classList.add('open');
-            const names = otherTyping.map(uid => typing[uid]?.name || 'Someone');
-            el.typingText.textContent = `${names.slice(0,2).join(', ')} is typing…`;
-          } else {
-            el.typingBar.classList.remove('open');
-          }
-        });
-      }
-
-      function pushMessage(payload) {
-        const base = {
-          uid: state.user.uid,
-          name: state.user.name,
-          createdAt: Date.now(),
-        };
-        firebase.database().ref('messages').push({ ...base, ...payload });
-      }
-
-      async function init() {
-        initTheme();
-        applyBrand(state.brand);
-        buildStickers();
-        initEvents();
-        try {
-          await ensureAuth();
-          listenMessages();
-        } catch (e) {
-          console.error('Auth error', e);
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(26, 26, 26, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
-      }
-
-      // Allow dropping image files
-      document.addEventListener('dragover', (e) => { e.preventDefault(); });
-      document.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const f = e.dataTransfer.files && e.dataTransfer.files[0];
-        if (f && f.type.startsWith('image/')) onFileChosen(f);
-      });
-
-      // Paste image URL support
-      document.addEventListener('paste', (e) => {
-        const text = e.clipboardData.getData('text');
-        if (isImageUrl(text)) {
-          sendText(text);
+        
+        header {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
         }
-      });
-
-      // Kick-off
-      init();
-    </script>
-  </body>
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(230, 194, 41, 0.5);
+        }
+        
+        h2 {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 10px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            margin-top: 25px;
+            color: var(--accent-color);
+        }
+        
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .warning {
+            background-color: rgba(139, 26, 26, 0.2);
+            border-left: 4px solid var(--danger-color);
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .level-card {
+            background-color: rgba(58, 58, 58, 0.3);
+            border: 1px solid var(--secondary-color);
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .level-card:hover {
+            background-color: rgba(58, 58, 58, 0.5);
+            border-color: var(--accent-color);
+        }
+        
+        .entity-card {
+            background-color: rgba(58, 58, 58, 0.3);
+            border: 1px solid var(--secondary-color);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .entity-danger {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        nav {
+            background-color: var(--secondary-color);
+            padding: 10px 0;
+            margin-bottom: 30px;
+        }
+        
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        nav li {
+            margin: 0 15px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--secondary-color);
+            font-size: 0.9em;
+            color: #888;
+        }
+        
+        .quote {
+            font-style: italic;
+            color: #aaa;
+            border-left: 2px solid var(--accent-color);
+            padding-left: 15px;
+            margin: 20px 0;
+        }
+        
+        .level-tag {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 3px 8px;
+            font-size: 0.8em;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>后室探索档案</h1>
+            <p class="quote">"如果你不小心在错误的地方脱离现实，你最终会来到后室，那里只有潮湿的旧地毯的臭味，单调的黄色，荧光灯无尽嗡鸣的背景噪音，以及大约六亿平方英里随机分割的空房间被困在其中。"</p>
+        </header>
+        
+        <nav>
+            <ul>
+                <li><a href="#about">关于后室</a></li>
+                <li><a href="#levels">层级介绍</a></li>
+                <li><a href="#entities">实体种类</a></li>
+                <li><a href="#entry-exit">进入与逃离</a></li>
+                <li><a href="#communities">生存者社区</a></li>
+            </ul>
+        </nav>
+        
+        <section id="intro">
+            <h2>欢迎来到非现实空间</h2>
+            <p>后室(The Backrooms)是一个都市传说中描述的神秘空间集合体，据称由无数个非欧几里得几何结构的"层级"组成。这些层级表现出各种超现实的、往往令人不安的环境特征，从看似普通的办公室走廊到完全违背物理定律的扭曲空间。</p>
+            <p>根据传说，当一个人在现实世界中"错误地脱离"时，可能会意外进入后室。这种"卡入"现象通常被描述为穿过一个不应该存在的空间，或者在一个熟悉的地方突然发现一条新的、不协调的路径。</p>
+            <div class="warning">
+                <strong>警告：</strong>本网站内容基于都市传说和虚构创作。后室并非真实存在，但请谨慎思考：如果你发现自己身处一个陌生的黄色走廊，听到荧光灯持续的嗡鸣声...你确定自己还在现实世界吗？
+            </div>
+        </section>
+        
+        <section id="about">
+            <h2>关于后室</h2>
+            <p>后室被描述为一个与我们的现实世界平行存在的空间集合，但它不遵循我们所知的物理定律和空间逻辑。后室最显著的特征包括：</p>
+            <ul>
+                <li><strong>非欧几里得几何：</strong>空间结构可能无限延伸或自我循环，距离和方向感常常失效</li>
+                <li><strong>层级系统：</strong>后室由无数个被称为"层级"的独立空间组成，每个层级都有独特的环境特征和危险</li>
+                <li><strong>实体存在：</strong>某些层级栖息着被称为"实体"的非人类生物，它们的智能和敌意程度各不相同</li>
+                <li><strong>孤立性：</strong>大多数层级缺乏常规的食物和水源，使生存成为挑战</li>
+                <li><strong>不稳定连接：</strong>层级之间通过不可靠的"入口"连接，这些入口可能突然出现或消失</li>
+            </ul>
+            <p>后室是否真实存在尚无定论，但众多目击报告和生存者描述(如果可信)描绘了一个庞大、复杂且极度危险的异次元空间网络。</p>
+        </section>
+        
+        <section id="levels">
+            <h2>层级介绍</h2>
+            <p>后室由无数个层级组成，每个层级都有其独特的环境特征、危险程度和生存条件。以下是几个最常被提及的层级：</p>
+            
+            <div class="level-card">
+                <h3><span class="level-tag">Level 0</span> "起始大厅"</h3>
+                <p><strong>环境描述：</strong>Level 0是大多数意外进入后室的人最先到达的地方。它由看似无限的办公室走廊和房间组成，墙壁覆盖着单调的黄色壁纸，地面铺设潮湿的旧地毯，空气中弥漫着霉味。荧光灯持续发出嗡嗡声，偶尔会闪烁或熄灭。</p>
+                <p><strong>实体：</strong>Level 0通常被认为没有实体，但孤立感和空间扭曲可能导致精神崩溃。</p>
+                <p><strong>生存难点：</strong>缺乏食物和水源；单调环境导致感官剥夺；空间扭曲使人难以保持方向感。</p>
+                <p><strong>进入方式：</strong>在现实世界中"错误地脱离"是进入Level 0的主要方式。</p>
+                <p><strong>离开方式：</strong>通过寻找不自然的墙壁或地板区域"卡出"可能到达Level 1；极少数情况下，找到一扇不寻常的门可能通向其他层级。</p>
+            </div>
+            
+            <div class="level-card">
+                <h3><span class="level-tag">Level 1</span> "宜居地带"</h3>
+                <p><strong>环境描述：</strong>Level 1类似于一个巨大的工业仓库，有着混凝土墙壁和裸露的管道系统。相比Level 0，这里的光源更加分散且不稳定，有些区域完全黑暗。温度通常在10-15°C之间，湿度较低。</p>
+                <p><strong>实体：</strong>可能遇到微笑者(Smilers)、爬行者(Crawlers)和钝人(Dullers)等敌对实体。</p>
+                <p><strong>生存难点：</strong>实体威胁增加；黑暗区域可能隐藏危险；资源仍然稀缺但比Level 0更容易找到。</p>
+                <p><strong>进入方式：</strong>从Level 0"卡出"；少数情况下从Level 2下降到达。</p>
+                <p><strong>离开方式：</strong>找到通往Level 2的楼梯；某些管道可能通向Level 3或Level 4。</p>
+            </div>
+            
+            <div class="level-card">
+                <h3><span class="level-tag">Level 2</span> "管道噩梦"</h3>
+                <p><strong>环境描述：</strong>Level 2由狭窄的管道走廊、通风井和机械设备室组成，温度极高(通常超过40°C)，空气中充满蒸汽和机械噪音。墙壁上布满裸露的电线和管道，有些区域电力不稳定。</p>
+                <p><strong>实体：</strong>猎犬(Hounds)、皮肤偷窃者(Skin-Stealers)和窗户(Windows)等高危实体频繁出现。</p>
+                <p><strong>生存难点：</strong>极端高温和湿度；实体攻击性极强；复杂狭窄的空间容易迷路。</p>
+                <p><strong>进入方式：</strong>从Level 1找到向上的楼梯；少数情况下从Level 3的通风系统下降。</p>
+                <p><strong>离开方式：</strong>找到电梯可能到达Level 3或Level 4；某些通风井通向Level 5。</p>
+            </div>
+            
+            <div class="level-card">
+                <h3><span class="level-tag">Level 3</span> "电气站"</h3>
+                <p><strong>环境描述：</strong>Level 3是一个由电气设备和变电站组成的迷宫，有着高天花板和复杂的金属结构。闪烁的灯光和持续的电气噪音创造了一种不安的氛围。温度适中但空气干燥。</p>
+                <p><strong>实体：</strong>电线(Wires)、灯光窃取者(Light-Stealers)和少数猎犬。</p>
+                <p><strong>生存难点：</strong>电气设备可能突然激活造成危险；实体善于隐藏；资源分布不均。</p>
+                <p><strong>进入方式：</strong>从Level 2的电梯；Level 4的某些门可能通向这里。</p>
+                <p><strong>离开方式：</strong>找到标有"出口"的门可能到达Level 4；某些电气柜是通往Level 5的入口。</p>
+            </div>
+            
+            <div class="level-card">
+                <h3><span class="level-tag">Level 4</span> "废弃办公室"</h3>
+                <p><strong>环境描述：</strong>Level 4看起来像一个被遗弃的办公大楼，有着标准的办公室隔间、会议室和休息区。与Level 0不同，这里的空间结构更接近现实世界的办公楼，但同样没有其他人类。电源通常工作，电脑屏幕闪烁着无意义的代码。</p>
+                <p><strong>实体：</strong>派对者(Partygoers)、观察者(Watchers)和少数微笑者。</p>
+                <p><strong>生存难点：</strong>实体数量虽少但极具欺骗性；某些区域可能突然变化；孤独感强烈。</p>
+                <p><strong>进入方式：</strong>从Level 3的出口门；Level 5的某些楼梯向下。</p>
+                <p><strong>离开方式：</strong>找到消防楼梯可能到达Level 5；电梯有时会通向Level 6。</p>
+            </div>
+            
+            <p class="quote">"后室的层级远不止这些。有些报告提到了Level 5的酒店走廊、Level 6的黑暗迷宫、Level 7的被淹走廊...甚至传说中还有更危险的负层级和特殊层级。但那些信息更加零散且不可靠。"</p>
+        </section>
+        
+        <section id="entities">
+            <h2>实体种类</h2>
+            <p>后室中栖息着各种被称为"实体"的非人类生物。它们的形态、智能水平和敌意程度各不相同。以下是几个最常被报告的实体类型：</p>
+            
+            <div class="entity-card">
+                <h3>微笑者 (Smilers)</h3>
+                <p><strong>外观：</strong>高约2-3米的人形轮廓，完全黑色，面部只有一张夸张的、发光的白色微笑。</p>
+                <p><strong>行为模式：</strong>通常在黑暗中静止不动，当发现人类时会缓慢接近，保持微笑。如果受害者表现出恐惧，会突然加速攻击。</p>
+                <p><strong>危险等级：</strong> <span class="entity-danger">极高</span> - 直接对视会导致其攻击，逃跑几乎不可能。</p>
+                <p><strong>应对方法：</strong>避免直视；缓慢后退；如果必须经过，保持目光向下并表现出非威胁姿态。</p>
+                <p><strong>常见层级：</strong>Level 1, Level 2, Level 6</p>
+            </div>
+            
+            <div class="entity-card">
+                <h3>猎犬 (Hounds)</h3>
+                <p><strong>外观：</strong>类似畸形的犬科动物，皮肤缺失部分露出肌肉组织，眼睛位置不规则，嘴部异常大。</p>
+                <p><strong>行为模式：</strong>成群活动(3-8只)，通过声音和气味追踪猎物。会包围目标并协同攻击。</p>
+                <p><strong>危险等级：</strong> <span class="entity-danger">高</span> - 速度快且攻击性强，但可以被明亮光线暂时驱散。</p>
+                <p><strong>应对方法：</strong>强光照射；制造噪音引开注意力；如果被包围，寻找狭窄空间限制其数量优势。</p>
+                <p><strong>常见层级：</strong>Level 2, Level 3, Level 5</p>
+            </div>
+            
+            <div class="entity-card">
+                <h3>派对者 (Partygoers)</h3>
+                <p><strong>外观：</strong>人形，穿着色彩鲜艳的派对服装，面部被不自然的笑容固定，皮肤呈现不健康的粉红色。</p>
+                <p><strong>行为模式：</strong>假装友好并邀请受害者参加"派对"，如果拒绝会变得敌对。语言能力高，善于欺骗。</p>
+                <p><strong>危险等级：</strong> <span class="entity-danger">中到高</span> - 单独时较易逃脱，群体时极度危险。</p>
+                <p><strong>应对方法：</strong>不要接受任何食物或饮料；避免长时间交谈；假装接受邀请然后找机会逃跑。</p>
+                <p><strong>常见层级：</strong>Level 4, Level 5, Level 188</p>
+            </div>
+            
+            <div class="entity-card">
+                <h3>观察者 (Watchers)</h3>
+                <p><strong>外观：</strong>高大瘦削的人形，穿着黑色西装，面部没有特征只有一片空白。</p>
+                <p><strong>行为模式：</strong>保持距离观察人类活动，记录行为。通常不主动攻击但会跟踪感兴趣的目标。</p>
+                <p><strong>危险等级：</strong> <span class="entity-danger">低到中</span> - 直接威胁小，但可能引来其他实体。</p>
+                <p><strong>应对方法：</strong>忽略它们；不要表现出攻击性；如果被跟踪，改变路线或进入明亮区域。</p>
+                <p><strong>常见层级：</strong>Level 1, Level 4, Level 6</p>
+            </div>
+            
+            <div class="warning">
+                <strong>重要提示：</strong>这只是后室中极少部分的实体样本。据报告还有数十种其他实体存在，有些甚至更加危险和不可预测。永远保持警惕，不要假设任何实体是无害的。
+            </div>
+        </section>
+        
+        <section id="entry-exit">
+            <h2>进入与逃离</h2>
+            <h3>进入后室的方式</h3>
+            <p>根据各种报告和传说，进入后室通常是非自愿的，被称为"卡入"现象。常见方式包括：</p>
+            <ul>
+                <li><strong>现实脱离：</strong>在现实世界中穿过一个不应该存在的空间边界(如墙壁、地板)，或在一个熟悉的地方突然发现一条新的、不协调的路径</li>
+                <li><strong>梦境转移：</strong>少数报告称在梦中意识到自己正在做梦，然后通过特定方式"转入"后室</li>
+                <li><strong>层级穿越：</strong>从其他类似空间(如前厅或侧室)意外进入后室系统</li>
+                <li><strong>人为实验：</strong>某些理论提到秘密组织可能掌握了人为进入后室的技术</li>
+            </ul>
+            
+            <h3>逃离后室的可能性</h3>
+            <p>关于逃离后室的报告非常稀少且难以验证，但流传的方法包括：</p>
+            <ul>
+                <li><strong>找到出口层级：</strong>传说某些特定层级(如Level 399)有稳定的现实出口</li>
+                <li><strong>完成条件：</strong>某些层级据说需要完成特定任务或收集物品才能开启出口</li>
+                <li><strong>逆向卡出：</strong>在特定位置"卡出"后室边界可能返回现实，但风险极高且位置难以确定</li>
+                <li><strong>外部协助：</strong>极少数报告提到现实世界有人能够将后室内的人"拉回"，但机制不明</li>
+            </ul>
+            <p class="quote">"记住，这些逃离方法都基于未经证实的传说。大多数进入后室的人再也没有回来讲述他们的经历。如果你发现自己身处后室，首要任务是生存，而不是盲目寻找出口。"</p>
+        </section>
+        
+        <section id="communities">
+            <h2>生存者社区</h2>
+            <p>尽管后室环境极端危险，但有报告称存在由长期生存者组成的社区。这些社区通常位于资源相对丰富、实体威胁较低的层级。以下是已知的几个主要社区：</p>
+            
+            <h3>M.E.G. (主要探索者集团)</h3>
+            <p>据称是后室中最大的生存者组织，致力于探索层级、收集资源并帮助新进入者。他们在多个层级设有前哨站，主要基地位于Level 4的一个加固办公区。</p>
+            <p><strong>生存规则：</strong>资源共享；新人培训；层级信息记录；避免不必要的风险。</p>
+            
+            <h3>阿尔法基地 (Alpha Base)</h3>
+            <p>位于Level 3的一个变电站改造的生存者据点，专注于技术修复和电力维护。成员多为工程师和技术人员。</p>
+            <p><strong>生存规则：</strong>技能交换；设备优先；轮流值守；严格的门禁制度。</p>
+            
+            <h3>殖民地 (The Colony)</h3>
+            <p>Level 1的一个大型社区，利用仓库空间建立了相对持久的居住区。以农业创新闻名，开发了在后室环境中种植食物的方法。</p>
+            <p><strong>生存规则：</strong>劳动换取食物；集体防御；实体预警系统；禁止单独行动。</p>
+            
+            <div class="warning">
+                <strong>注意：</strong>这些社区的存在和位置信息基于零散且难以验证的报告。即使它们确实存在，在后室中找到这些社区也极其困难。此外，并非所有自称"友善"的群体都值得信任。
+            </div>
+        </section>
+        
+        <section id="conclusion">
+            <h2>最后警告</h2>
+            <p>后室是一个令人着迷的都市传说，它反映了人类对未知空间的恐惧和好奇。然而，必须强调：</p>
+            <ul>
+                <li>后室并非科学证实存在的空间</li>
+                <li>所有相关信息都来自匿名网络传说和虚构创作</li>
+                <li>不要尝试在现实世界中寻找或制造"卡入"现象</li>
+            </ul>
+            <p>尽管如此，这个传说提出了一个耐人寻味的问题：如果我们的现实世界只是一个表层，在那之外存在着无限陌生、无限危险的"后室"...你确定自己现在所处的地方，就是真正的现实吗？</p>
+            <p class="quote">"灯光在闪烁...墙壁的颜色看起来不太对劲...你听到远处有脚步声吗？不，那可能只是你的想象。毕竟，后室只是一个传说...对吧？"</p>
+        </section>
+        
+        <footer>
+            <p>后室探索档案 &copy; 2023 - 基于都市传说和虚构创作</p>
+            <p>本网站内容仅供娱乐，不宣称任何超自然现象的真实性</p>
+            <p>如果你"意外"进入了后室...祝你好运。你会需要的。</p>
+        </footer>
+    </div>
+</body>
 </html>
